@@ -5,6 +5,7 @@
 Production-ready Python project for portfolio optimization using historical stock prices, mean-variance analytics, and a Streamlit user interface.
 
 ## Table of Contents
+
 1. Project Overview
 2. Features
 3. Architecture
@@ -21,6 +22,7 @@ Production-ready Python project for portfolio optimization using historical stoc
 
 This project builds optimized equity portfolios from historical price data sourced via `pandas-datareader` (Stooq).  
 It computes:
+
 - Maximum Sharpe Ratio portfolio
 - Minimum Volatility portfolio
 - Efficient Frontier curve
@@ -88,6 +90,7 @@ streamlit run app.py
 ## Configuration
 
 You can control:
+
 - Tickers (comma-separated)
 - Start and end date
 - Annual risk-free rate (decimal, e.g. `0.02`)
@@ -98,64 +101,55 @@ You can control:
 
 The implementation follows Modern Portfolio Theory under constraints.
 
-1. Return Model  
-Daily simple returns are computed from close prices:
+1. Return model  
+   Daily simple returns from close prices:
+   `r_t = (P_t - P_{t-1}) / P_{t-1}`
 
-\[
-r_t = \frac{P_t - P_{t-1}}{P_{t-1}}
-\]
+Estimated inputs:
 
-Expected returns vector and covariance matrix:
-- \(\mu = \mathbb{E}[r]\)
-- \(\Sigma = \mathrm{Cov}(r)\)
+- `mu = E[r]` (mean return vector)
+- `Sigma = Cov(r)` (covariance matrix)
 
-Annualization uses 252 trading days.
+Annualization factor: `252` trading days.
 
-2. Portfolio Metrics  
-For weight vector \(w\):
+2. Portfolio metrics  
+   For weight vector `w`:
 
-\[
-R_p = 252 \cdot \mu^T w
-\]
-\[
-\sigma_p = \sqrt{252 \cdot w^T \Sigma w}
-\]
+- `R_p = 252 * (mu^T * w)` (annualized return)
+- `sigma_p = sqrt(252 * (w^T * Sigma * w))` (annualized volatility)
 
 3. Maximum Sharpe Ratio  
-Objective:
+   Objective:
+   `maximize (R_p - r_f) / sigma_p`
 
-\[
-\max_w \frac{R_p - r_f}{\sigma_p}
-\]
+Implemented as minimization:
 
-Implemented by minimizing negative Sharpe:
-- objective: `negative_sharpe(...)`
-- solver: SLSQP
+- Objective function: `negative_sharpe(...)`
+- Solver: `SLSQP`
 
 4. Minimum Volatility  
-Objective:
-
-\[
-\min_w \sigma_p
-\]
+   Objective:
+   `minimize sigma_p`
 
 5. Efficient Frontier  
-For each target return \(R^*\), solve:
+   For each target return `R*`, solve:
+   `minimize sigma_p`  
+   subject to:
 
-\[
-\min_w \sigma_p \quad \text{s.t.} \quad R_p = R^*, \sum_i w_i = 1
-\]
+- `R_p = R*`
+- `sum(w_i) = 1`
 
-6. Constraints  
-All optimization problems use:
-- Budget constraint: \(\sum_i w_i = 1\)
-- Bound constraints: \(l_i \le w_i \le u_i\)
+6. Constraints used in all optimizations
 
-This is why SLSQP is used: it handles both equality and bound constraints reliably.
+- Budget constraint: `sum(w_i) = 1`
+- Bound constraints: `l_i <= w_i <= u_i`
+
+`SLSQP` is used because it supports both equality constraints and bound constraints.
 
 ## Output
 
 The app provides:
+
 - Efficient frontier chart
 - Max Sharpe and Min Vol KPIs
 - Asset allocations for both optimized portfolios
@@ -174,7 +168,7 @@ The screenshot below shows a real app run with optimization metrics, allocation 
 - Transaction costs, slippage, and taxes are not modeled.
 - Single-period optimization only (no rebalancing schedule).
 
-## Roadmap
+## Incoming Features
 
 - Add backtesting and periodic rebalancing
 - Add robust covariance estimators (Ledoit-Wolf, EWMA)
